@@ -1248,6 +1248,8 @@ function createDashboardWithActionButton({
   });
 
   saveDashboard();
+
+  cy.wait("@getModel");
 }
 
 const changeValue = ({ fieldName, fieldType, oldValue, newValue }) => {
