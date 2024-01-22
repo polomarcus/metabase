@@ -9,6 +9,7 @@ interface SortableProps {
   as?: ElementType;
   children: ReactNode;
   disabled?: boolean;
+  transition?: boolean;
 }
 
 /**
@@ -21,14 +22,23 @@ export function Sortable({
   children,
   disabled = false,
 }: SortableProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id, disabled });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isSorting,
+  } = useSortable({
+    id,
+    disabled,
+  });
 
   return (
     <SortableDiv
       as={as}
       transform={CSS.Transform.toString(transform)}
-      transition={transition}
+      transition={isSorting ? transition : undefined}
       ref={setNodeRef}
       {...attributes}
       {...listeners}
