@@ -1,13 +1,14 @@
 /* eslint-disable react/prop-types */
 import { useMemo } from "react";
 import cx from "classnames";
-import { DndContext, useSensor, PointerSensor } from "@dnd-kit/core";
-import { SortableContext } from "@dnd-kit/sortable";
+import { useSensor, PointerSensor } from "@dnd-kit/core";
 
 import { Icon } from "metabase/ui";
 import { getVisibleParameters } from "metabase/parameters/utils/ui";
-import { Sortable } from "metabase/core/components/Sortable";
+import { useSortableList } from "metabase/core/components/Sortable/useSortableList";
 import { ParameterWidget } from "./ParameterWidget";
+
+const getId = valuePopulatedParameter => valuePopulatedParameter.id;
 
 function ParametersList({
   className,
@@ -41,75 +42,59 @@ function ParametersList({
     document.body.classList.add("grabbing");
   };
 
-  const handleSortEnd = async ({ over, active }) => {
+  const handleSortEnd = async ({ id, newIndex }) => {
     document.body.classList.remove("grabbing");
     if (setParameterIndex) {
-      const newIndex = visibleValuePopulatedParameters.findIndex(
-        parameter => parameter.id === over.id,
-      );
-
-      setParameterIndex(active.id, newIndex);
+      setParameterIndex(id, newIndex);
     }
   };
 
-  const parameterWidgetIds = visibleValuePopulatedParameters.map(
-    param => param.id,
-  );
+  const { sortableList } = useSortableList({
+    items: visibleValuePopulatedParameters,
+    onSortEnd: handleSortEnd,
+    onSortStart: handleSortStart,
+    getId,
+    disableSort: !isEditing,
+    sensors: [pointerSensor],
+    renderItem: valuePopulatedParameter => (
+      <ParameterWidget
+        className={cx({ mb2: vertical })}
+        isEditing={isEditing}
+        isFullscreen={isFullscreen}
+        isNightMode={isNightMode}
+        parameter={valuePopulatedParameter}
+        parameters={parameters}
+        question={question}
+        dashboard={dashboard}
+        editingParameter={editingParameter}
+        setEditingParameter={setEditingParameter}
+        setValue={
+          setParameterValue &&
+          (value => setParameterValue(valuePopulatedParameter.id, value))
+        }
+        commitImmediately={commitImmediately}
+        setParameterValueToDefault={setParameterValueToDefault}
+        dragHandle={
+          isEditing && setParameterIndex ? (
+            <div className="flex layout-centered cursor-grab text-inherit">
+              <Icon name="grabber" />
+            </div>
+          ) : null
+        }
+      />
+    ),
+  });
 
   return visibleValuePopulatedParameters.length > 0 ? (
-    <DndContext
-      onDragStart={handleSortStart}
-      onDragEnd={handleSortEnd}
-      sensors={[pointerSensor]}
+    <div
+      className={cx(
+        className,
+        "flex align-end flex-wrap",
+        vertical ? "flex-column" : "flex-row",
+      )}
     >
-      <SortableContext items={parameterWidgetIds}>
-        <div
-          className={cx(
-            className,
-            "flex align-end flex-wrap",
-            vertical ? "flex-column" : "flex-row",
-          )}
-        >
-          {visibleValuePopulatedParameters.map(
-            (valuePopulatedParameter, index) => (
-              <Sortable
-                key={valuePopulatedParameter.id}
-                id={valuePopulatedParameter.id}
-                disabled={!isEditing}
-              >
-                <ParameterWidget
-                  className={cx({ mb2: vertical })}
-                  isEditing={isEditing}
-                  isFullscreen={isFullscreen}
-                  isNightMode={isNightMode}
-                  parameter={valuePopulatedParameter}
-                  parameters={parameters}
-                  question={question}
-                  dashboard={dashboard}
-                  editingParameter={editingParameter}
-                  setEditingParameter={setEditingParameter}
-                  index={index}
-                  setValue={
-                    setParameterValue &&
-                    (value =>
-                      setParameterValue(valuePopulatedParameter.id, value))
-                  }
-                  setParameterValueToDefault={setParameterValueToDefault}
-                  commitImmediately={commitImmediately}
-                  dragHandle={
-                    isEditing && setParameterIndex ? (
-                      <div className="flex layout-centered cursor-grab text-inherit">
-                        <Icon name="grabber" />
-                      </div>
-                    ) : null
-                  }
-                />
-              </Sortable>
-            ),
-          )}
-        </div>
-      </SortableContext>
-    </DndContext>
+      {sortableList}
+    </div>
   ) : null;
 }
 

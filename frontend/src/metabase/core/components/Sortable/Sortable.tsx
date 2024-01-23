@@ -28,7 +28,7 @@ export function Sortable({
     setNodeRef,
     transform,
     transition,
-    isSorting,
+    isDragging,
   } = useSortable({
     id,
     disabled,
@@ -38,7 +38,8 @@ export function Sortable({
     <SortableDiv
       as={as}
       transform={CSS.Transform.toString(transform)}
-      transition={isSorting ? transition : undefined}
+      transition={transition}
+      isDragging={isDragging}
       ref={setNodeRef}
       {...attributes}
       {...listeners}
