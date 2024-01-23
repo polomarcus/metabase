@@ -9,7 +9,6 @@ interface SortableProps {
   as?: ElementType;
   children: ReactNode;
   disabled?: boolean;
-  transition?: boolean;
 }
 
 /**
