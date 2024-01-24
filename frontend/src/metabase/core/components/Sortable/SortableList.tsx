@@ -20,7 +20,7 @@ interface useSortableListProps<T> {
   modifiers?: Modifier[];
 }
 
-export function useSortableList<T>({
+export const SortableList = <T,>({
   items,
   getId,
   renderItem,
@@ -29,7 +29,7 @@ export function useSortableList<T>({
   disableSort = false,
   sensors = [],
   modifiers = [],
-}: useSortableListProps<T>) {
+}: useSortableListProps<T>) => {
   const [itemIds, setItemIds] = useState<any[]>([]);
   const [activeItem, setActiveItem] = useState<T | null>(null);
 
@@ -80,7 +80,7 @@ export function useSortableList<T>({
     }
   };
 
-  const sortableList = (
+  return (
     <DndContext
       onDragOver={handleDragOver}
       onDragStart={handleDragStart}
@@ -92,8 +92,4 @@ export function useSortableList<T>({
       <DragOverlay>{activeItem ? renderItem(activeItem) : null}</DragOverlay>
     </DndContext>
   );
-
-  return {
-    sortableList,
-  };
-}
+};
