@@ -38,13 +38,8 @@ function ParametersList({
     [parameters, hideParameters],
   );
 
-  const handleSortStart = useCallback(() => {
-    document.body.classList.add("grabbing");
-  }, []);
-
   const handleSortEnd = useCallback(
     ({ id, newIndex }) => {
-      document.body.classList.remove("grabbing");
       if (setParameterIndex) {
         setParameterIndex(id, newIndex);
       }
@@ -93,9 +88,9 @@ function ParametersList({
         getId={getId}
         renderItem={renderItem}
         onSortEnd={handleSortEnd}
-        onSortStart={handleSortStart}
-        disableSort={!isEditing}
         sensors={[pointerSensor]}
+        disableSort={!isEditing}
+        wrapperProps={{ draggingStyle: { opacity: 0.5 } }}
       />
     </div>
   ) : null;

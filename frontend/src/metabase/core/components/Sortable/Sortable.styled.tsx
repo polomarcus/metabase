@@ -7,5 +7,5 @@ export const SortableDiv = styled.div<{
 }>`
   transform: ${props => props.transform};
   transition: ${props => props.transition};
-  opacity: ${({ isDragging }) => (isDragging ? 0.5 : undefined)};
+  ${({ isDragging }) => (isDragging ? "z-index: 10;" : "")}
 `;
