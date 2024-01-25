@@ -1,4 +1,3 @@
-import type React from "react";
 import { useState, useMemo, useEffect } from "react";
 import _ from "underscore";
 import type {
@@ -10,21 +9,22 @@ import type {
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import { SortableContext, arrayMove } from "@dnd-kit/sortable";
 import { isNotNull } from "metabase/lib/types";
-import { Sortable, type SortableProps } from "./Sortable";
 
-type itemId = number | string;
+type ItemId = number | string;
 
+interface RenderItemProps<T> {
+  item: T;
+  id: ItemId;
+  isDragOverlay?: boolean;
+}
 interface useSortableListProps<T> {
   items: T[];
-  getId: (item: T) => itemId;
-  renderItem: (item: T, id?: itemId) => JSX.Element;
+  getId: (item: T) => ItemId;
+  renderItem: ({ item, id, isDragOverlay }: RenderItemProps<T>) => JSX.Element;
   onSortStart?: (event: DragStartEvent) => void;
-  onSortEnd?: ({ id, newIndex }: { id: itemId; newIndex: number }) => void;
-  disableSort?: boolean;
+  onSortEnd?: ({ id, newIndex }: { id: ItemId; newIndex: number }) => void;
   sensors?: SensorDescriptor<any>[];
   modifiers?: Modifier[];
-  sortableWrapper?: React.ComponentType<SortableProps>;
-  wrapperProps?: Record<any, any>;
 }
 
 export const SortableList = <T,>({
@@ -33,14 +33,11 @@ export const SortableList = <T,>({
   renderItem,
   onSortStart,
   onSortEnd,
-  disableSort = false,
   sensors = [],
   modifiers = [],
-  sortableWrapper: SortableWrapper = Sortable,
-  wrapperProps,
 }: useSortableListProps<T>) => {
-  const [itemIds, setItemIds] = useState<itemId[]>([]);
-  const [indexedItems, setIndexedItems] = useState<Record<itemId, T>>({});
+  const [itemIds, setItemIds] = useState<ItemId[]>([]);
+  const [indexedItems, setIndexedItems] = useState<Record<ItemId, T>>({});
   const [activeItem, setActiveItem] = useState<T | null>(null);
 
   useEffect(() => {
@@ -52,30 +49,13 @@ export const SortableList = <T,>({
     () =>
       itemIds
         .map(id => {
-          // const item = items.find(item => getId(item) === id);
           const item = indexedItems[id];
           if (item) {
-            return (
-              <SortableWrapper
-                id={id}
-                key={`sortable-${id}`}
-                disabled={disableSort}
-                {...wrapperProps}
-              >
-                {renderItem(item, id)}
-              </SortableWrapper>
-            );
+            return renderItem({ item, id });
           }
         })
         .filter(isNotNull),
-    [
-      itemIds,
-      renderItem,
-      disableSort,
-      wrapperProps,
-      indexedItems,
-      SortableWrapper,
-    ],
+    [itemIds, renderItem, indexedItems],
   );
 
   const handleDragOver = ({ active, over }: DragOverEvent) => {
@@ -90,9 +70,8 @@ export const SortableList = <T,>({
 
   const handleDragStart = (event: DragStartEvent) => {
     document.body.classList.add("grabbing");
-    if (onSortStart) {
-      onSortStart(event);
-    }
+
+    onSortStart?.(event);
 
     const item = items.find(item => getId(item) === event.active.id);
     if (item) {
@@ -120,7 +99,15 @@ export const SortableList = <T,>({
       modifiers={modifiers}
     >
       <SortableContext items={itemIds}>{sortableElements}</SortableContext>
-      <DragOverlay>{activeItem ? renderItem(activeItem) : null}</DragOverlay>
+      <DragOverlay>
+        {activeItem
+          ? renderItem({
+              item: activeItem,
+              id: getId(activeItem),
+              isDragOverlay: true,
+            })
+          : null}
+      </DragOverlay>
     </DndContext>
   );
 };

@@ -16,7 +16,7 @@ export interface SortableProps {
  * Wrapper to use with dnd-kit's Sortable preset
  * https://docs.dndkit.com/presets/sortable
  */
-function _Sortable({
+export function Sortable({
   id,
   as = "div",
   children,
@@ -50,7 +50,3 @@ function _Sortable({
     </SortableDiv>
   );
 }
-
-export const Sortable = Object.assign(_Sortable, {
-  Div: SortableDiv,
-});

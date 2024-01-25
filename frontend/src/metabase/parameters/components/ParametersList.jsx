@@ -5,7 +5,7 @@ import { useSensor, PointerSensor } from "@dnd-kit/core";
 
 import { Icon } from "metabase/ui";
 import { getVisibleParameters } from "metabase/parameters/utils/ui";
-import { SortableList } from "metabase/core/components/Sortable";
+import { SortableList, Sortable } from "metabase/core/components/Sortable";
 import { ParameterWidget } from "./ParameterWidget";
 
 const getId = valuePopulatedParameter => valuePopulatedParameter.id;
@@ -47,32 +47,39 @@ function ParametersList({
     [setParameterIndex],
   );
 
-  const renderItem = valuePopulatedParameter => (
-    <ParameterWidget
-      className={cx({ mb2: vertical })}
-      isEditing={isEditing}
-      isFullscreen={isFullscreen}
-      isNightMode={isNightMode}
-      parameter={valuePopulatedParameter}
-      parameters={parameters}
-      question={question}
-      dashboard={dashboard}
-      editingParameter={editingParameter}
-      setEditingParameter={setEditingParameter}
-      setValue={
-        setParameterValue &&
-        (value => setParameterValue(valuePopulatedParameter.id, value))
-      }
-      setParameterValueToDefault={setParameterValueToDefault}
-      commitImmediately={commitImmediately}
-      dragHandle={
-        isEditing && setParameterIndex ? (
-          <div className="flex layout-centered cursor-grab text-inherit">
-            <Icon name="grabber" />
-          </div>
-        ) : null
-      }
-    />
+  const renderItem = ({ item: valuePopulatedParameter, id }) => (
+    <Sortable
+      id={id}
+      key={`sortable-${id}`}
+      disabled={!isEditing}
+      draggingStyle={{ opacity: 0.5 }}
+    >
+      <ParameterWidget
+        className={cx({ mb2: vertical })}
+        isEditing={isEditing}
+        isFullscreen={isFullscreen}
+        isNightMode={isNightMode}
+        parameter={valuePopulatedParameter}
+        parameters={parameters}
+        question={question}
+        dashboard={dashboard}
+        editingParameter={editingParameter}
+        setEditingParameter={setEditingParameter}
+        setValue={
+          setParameterValue &&
+          (value => setParameterValue(valuePopulatedParameter.id, value))
+        }
+        setParameterValueToDefault={setParameterValueToDefault}
+        commitImmediately={commitImmediately}
+        dragHandle={
+          isEditing && setParameterIndex ? (
+            <div className="flex layout-centered cursor-grab text-inherit">
+              <Icon name="grabber" />
+            </div>
+          ) : null
+        }
+      />
+    </Sortable>
   );
 
   return visibleValuePopulatedParameters.length > 0 ? (
@@ -89,8 +96,6 @@ function ParametersList({
         renderItem={renderItem}
         onSortEnd={handleSortEnd}
         sensors={[pointerSensor]}
-        disableSort={!isEditing}
-        wrapperProps={{ draggingStyle: { opacity: 0.5 } }}
       />
     </div>
   ) : null;
