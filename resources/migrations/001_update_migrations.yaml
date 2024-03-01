@@ -5635,7 +5635,7 @@ databaseChangeLog:
             indexName: idx_data_permissions_group_id
 
   - changeSet:
-      id: v50.2024-01-10T03:27:29
+      id: v50.2024-01-10T03:27:27
       author: noahmoss
       comment: Drop foreign key constraint on sandboxes.permissions_id
       changes:
@@ -5652,6 +5652,64 @@ databaseChangeLog:
             onDelete: CASCADE
 
   - changeSet:
+      id: v50.2024-01-10T03:27:28
+      author: johnswanson
+      comment: Create a stored procedure in MySQL to delete a constraint iff it exists
+      changes:
+        - sqlFile:
+            dbms: mysql
+            endDelimiter: "$$"
+            splitStatement: true
+            path: permissions/mysql_create_drop_constraint_if_exists_procedure.sql
+            relativeToChangelogFile: true
+      rollback:
+        - sql:
+            dbms: mysql
+            sql: >-
+              DROP PROCEDURE IF EXISTS DropNoDataPermissionsConstraintIfExists;
+
+  - changeSet:
+      id: v50.2024-01-10T03:27:29
+      author: johnswanson
+      comment: Prohibit creating new data permission paths
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: >-
+              ALTER TABLE permissions ADD CONSTRAINT no_data_permissions CHECK (object NOT LIKE '%/db/%') NOT VALID;
+        - sql:
+            dbms: mysql
+            sql: >-
+              ALTER TABLE permissions ADD CONSTRAINT no_data_permissions CHECK (object NOT LIKE '%/db/%') NOT ENFORCED;
+        - sql:
+            dbms: h2
+            sql: >-
+              ALTER TABLE permissions ADD CONSTRAINT no_data_permissions CHECK (object NOT LIKE '%/db/%') NOCHECK;
+        # MariaDB has no built-in way to add a constraint but _not_ check/enforce it for existing rows in the
+        # database. Thus, we need to create a trigger that runs whenever a new row is created and possibly throws an
+        # exception. Note that this particular migration only creates a trigger `ON INSERT`, while the next migration
+        # creates a similar trigger for `ON UPDATE`.
+        - sqlFile:
+            dbms: mariadb
+            endDelimiter: "$$"
+            splitStatement: true
+            path: permissions/mariadb_enforce_no_data_permissions_on_create.sql
+            relativeToChangelogFile: true
+      rollback:
+        - sql:
+            dbms: mysql
+            sql: >-
+              CALL DropNoDataPermissionsConstraintIfExists();
+        - sql:
+            dbms: postgresql,h2
+            sql: >-
+              ALTER TABLE permissions DROP CONSTRAINT IF EXISTS no_data_permissions;
+        - sql:
+            dbms: mariadb
+            sql: >-
+              DROP TRIGGER IF EXISTS enforce_no_data_permissions_on_create;
+
+  - changeSet:
       id: v50.2024-01-10T03:27:30
       author: noahmoss
       comment: Migrate data-access permissions from `permissions` to `data_permissions`
@@ -5665,6 +5723,18 @@ databaseChangeLog:
             path: permissions/mysql_data_access.sql
             relativeToChangelogFile: true
       rollback:
+        - sql:
+            dbms: mysql
+            sql: >-
+              CALL DropNoDataPermissionsConstraintIfExists();
+        - sql:
+            dbms: postgresql,h2
+            sql: >-
+              ALTER TABLE permissions DROP CONSTRAINT IF EXISTS no_data_permissions;
+        - sql:
+            dbms: mariadb
+            sql: >-
+              DROP TRIGGER IF EXISTS enforce_no_data_permissions_on_create;
         - sqlFile:
             dbms: postgresql,h2
             path: permissions/rollback/data_access.sql
@@ -5683,6 +5753,18 @@ databaseChangeLog:
             path: permissions/native_query_editing.sql
             relativeToChangelogFile: true
       rollback:
+        - sql:
+            dbms: mysql
+            sql: >-
+              CALL DropNoDataPermissionsConstraintIfExists();
+        - sql:
+            dbms: postgresql,h2
+            sql: >-
+              ALTER TABLE permissions DROP CONSTRAINT IF EXISTS no_data_permissions;
+        - sql:
+            dbms: mariadb
+            sql: >-
+              DROP TRIGGER IF EXISTS enforce_no_data_permissions_on_create;
         - sqlFile:
             path: permissions/rollback/native_query_editing.sql
             relativeToChangelogFile: true
@@ -5701,6 +5783,18 @@ databaseChangeLog:
             path: permissions/mysql_download_results.sql
             relativeToChangelogFile: true
       rollback:
+        - sql:
+            dbms: mysql
+            sql: >-
+              CALL DropNoDataPermissionsConstraintIfExists();
+        - sql:
+            dbms: postgresql,h2
+            sql: >-
+              ALTER TABLE permissions DROP CONSTRAINT IF EXISTS no_data_permissions;
+        - sql:
+            dbms: mariadb
+            sql: >-
+              DROP TRIGGER IF EXISTS enforce_no_data_permissions_on_create;
         - sqlFile:
             dbms: postgresql,h2
             path: permissions/rollback/download_results.sql
@@ -5713,7 +5807,7 @@ databaseChangeLog:
   - changeSet:
       id: v50.2024-01-10T03:27:33
       author: noahmoss
-      comment: Migrate manage-data-metadata permissions from `permissions` to `data_permissions`
+      comment: Migrate manage-table-metadata permissions from `permissions` to `data_permissions`
       changes:
         - sqlFile:
             dbms: postgresql,h2
@@ -5724,6 +5818,18 @@ databaseChangeLog:
             path: permissions/mysql_manage_table_metadata.sql
             relativeToChangelogFile: true
       rollback:
+        - sql:
+            dbms: mysql
+            sql: >-
+              CALL DropNoDataPermissionsConstraintIfExists();
+        - sql:
+            dbms: postgresql,h2
+            sql: >-
+              ALTER TABLE permissions DROP CONSTRAINT IF EXISTS no_data_permissions;
+        - sql:
+            dbms: mariadb
+            sql: >-
+              DROP TRIGGER IF EXISTS enforce_no_data_permissions_on_create;
         - sqlFile:
             dbms: postgresql,h2
             path: permissions/rollback/manage_table_metadata.sql
@@ -5742,6 +5848,18 @@ databaseChangeLog:
             path: permissions/manage_database.sql
             relativeToChangelogFile: true
       rollback:
+        - sql:
+            dbms: mysql
+            sql: >-
+              CALL DropNoDataPermissionsConstraintIfExists();
+        - sql:
+            dbms: postgresql,h2
+            sql: >-
+              ALTER TABLE permissions DROP CONSTRAINT IF EXISTS no_data_permissions;
+        - sql:
+            dbms: mariadb
+            sql: >-
+              DROP TRIGGER IF EXISTS enforce_no_data_permissions_on_create;
         - sqlFile:
             path: permissions/rollback/manage_database.sql
             relativeToChangelogFile: true
